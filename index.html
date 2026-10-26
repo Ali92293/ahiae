@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="description" content="موقع تفاعلي ثلاثي الأبعاد لتعلم الخلية الحيوانية والنباتية. انقر على أي عضية لمعرفة وظيفتها بالتفصيل، ودوّر الخلية لمشاهدتها من جميع الزوايا." />
+  <title>عالَم الخلية ثلاثي الأبعاد | الخلية الحيوانية والنباتية</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>" />
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon" aria-hidden="true">🧬</span>
+        <span>عالَم الخلية 3D</span>
+      </div>
+
+      <div class="cell-switcher plant" id="cell-switcher" role="tablist" aria-label="تبديل نوع الخلية">
+        <span class="slider" aria-hidden="true"></span>
+        <button data-cell="plant" class="active" role="tab" aria-selected="true">🌿 النباتية</button>
+        <button data-cell="animal" role="tab" aria-selected="false">🐾 الحيوانية</button>
+      </div>
+
+      <div class="controls-group">
+        <button class="btn" id="btn-pause" title="إيقاف/تشغيل الحركة (مسافة)" aria-label="إيقاف الحركة">
+          <i aria-hidden="true">⏸</i><span>إيقاف الحركة</span>
+        </button>
+        <button class="btn" id="btn-labels" title="إظهار/إخفاء الأسماء" aria-label="إظهار الأسماء">
+          <i aria-hidden="true">👁</i><span>إظهار الأسماء</span>
+        </button>
+        <button class="btn" id="btn-rotate" title="الدوران التلقائي" aria-label="الدوران التلقائي">
+          <i aria-hidden="true">🔄</i><span>الدوران التلقائي</span>
+        </button>
+        <button class="btn btn-icon" id="btn-reset" title="إعادة ضبط الكاميرا" aria-label="إعادة ضبط الكاميرا">🔄</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <h1>عالَم الخلية ثلاثي الأبعاد</h1>
+    <p>
+      استكشف <strong style="color:#34d399">الخلية النباتية</strong> و
+      <strong style="color:#fb923c">الخلية الحيوانية</strong> كأنها أمامك.
+      دوّر الخلية وشاهدها من جميع الزوايا، وانقر على أي عضية لمعرفة وظيفتها وتفاصيلها الكاملة.
+    </p>
+    <div class="pill-row">
+      <span class="pill pill-emerald">🎮 تفاعلي ثلاثي الأبعاد</span>
+      <span class="pill pill-orange"><span data-organelles-count>10</span> عضية مفصّلة</span>
+      <span class="pill pill-emerald">🌍 اعرض من كل الزوايا</span>
+    </div>
+  </section>
+
+  <!-- ===== 3D Viewer ===== -->
+  <section class="viewer-container" aria-label="عارض الخلية ثلاثي الأبعاد">
+    <canvas id="cell-canvas" aria-label="مشهد ثلاثي الأبعاد للخلية"></canvas>
+
+    <div class="viewer-overlay">
+      <div class="viewer-top-bar">
+        <div class="cell-info-chip" id="cell-info-chip">
+          <div class="chip-title" style="color:#34d399">
+            <span class="dot" style="background:#34d399"></span>
+            🌿 الخلية النباتية
+          </div>
+          <div class="chip-desc">تتميز بوجود الجدار الخلوي والبلاستيدات الخضراء والفجوة العصارية الكبيرة، وتنتج غذاءها بالبناء الضوئي.</div>
+        </div>
+
+        <div class="viewer-controls">
+          <button class="btn btn-icon" id="btn-zoom-in" title="تكبير" aria-label="تكبير">+</button>
+          <button class="btn btn-icon" id="btn-zoom-out" title="تصغير" aria-label="تصغير">−</button>
+        </div>
+      </div>
+
+      <div class="viewer-bottom-bar">
+        <div class="hint-pill">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          اسحب للتدوير • عجلة الفأرة للتكبير • انقر على العضيات للتفاصيل
+        </div>
+      </div>
+    </div>
+
+    <!-- شاشة التحميل (يتم استبدالها ديناميكيًا عند الفشل) -->
+    <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+      <div class="loader" aria-hidden="true"></div>
+      <div class="loading-text">جاري تحميل الخلية ثلاثية الأبعاد...</div>
+    </div>
+  </section>
+
+  <!-- ===== Tooltip ===== -->
+  <div class="organelle-tooltip" id="organelle-tooltip" role="tooltip" aria-hidden="true"></div>
+
+  <!-- ===== Reference Grid ===== -->
+  <section class="reference-section">
+    <div class="section-header">
+      <div class="section-badge">🧬 دليل العضيات</div>
+      <h2>جدول العضيات ووظائفها</h2>
+      <p>تعرّف بسرعة على جميع العضيات الموجودة في الخلايا، وانقر على أي بطاقة لعرض التفاصيل الكاملة.</p>
+    </div>
+    <div class="reference-grid" id="reference-grid">
+      <!-- تُملأ البطاقات ديناميكيًا عبر JavaScript -->
+    </div>
+  </section>
+
+  <!-- ===== Comparison Table ===== -->
+  <section class="reference-section">
+    <div class="section-header">
+      <div class="section-badge">📊 مقارنة</div>
+      <h2>الفروق بين الخلية الحيوانية والنباتية</h2>
+      <p>مقارنة شاملة بين مكونات وخصائص الخلية الحيوانية والخلية النباتية.</p>
+    </div>
+
+    <div class="comparison-table" role="table" aria-label="جدول مقارنة بين الخلية النباتية والحيوانية">
+      <div class="comparison-row header" role="row">
+        <div class="comparison-cell plant" role="columnheader">
+          <div class="label-icon">🌿 الخلية النباتية</div>
+        </div>
+        <div class="comparison-cell feature" role="columnheader">الميزة</div>
+        <div class="comparison-cell animal" role="columnheader">
+          <div class="label-icon">🐾 الخلية الحيوانية</div>
+        </div>
+      </div>
+      <div id="comparison-tbody" role="rowgroup">
+        <!-- تُملأ الصفوف ديناميكيًا -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Info Cards ===== -->
+  <section class="reference-section">
+    <div class="section-header">
+      <div class="section-badge">📚 معلومات إثرائية</div>
+      <h2>حقائق مهمة عن الخلايا</h2>
+    </div>
+
+    <div class="info-cards-grid">
+      <div class="info-card info-card-emerald">
+        <div class="info-card-icon" aria-hidden="true">🧬</div>
+        <h3>الخلية وحدة البناء</h3>
+        <p>
+          اكتشف العالم روبرت هوك الخلايا لأول مرة عام 1665 عند فحصه شرائح الفلين بالمجهر،
+          وأطلق عليها اسم «خلية» لأنها شبهت بزنزانة الرهبان. منذ ذلك الحين، تطور فهمنا
+          للخلية حتى أصبحت أساس علم الأحياء الحديث.
+        </p>
+      </div>
+
+      <div class="info-card info-card-orange">
+        <div class="info-card-icon" aria-hidden="true">✨</div>
+        <h3>تنوع الخلايا</h3>
+        <p>
+          يحتوي جسم الإنسان على نحو 200 نوع مختلف من الخلايا، كل منها متخصص في وظيفة معينة.
+          فالخلية العصبية طويلة ومتفرعة لنقل الإشارات، وخلايا الدم الحمراء مقعّرة لحمل الأكسجين،
+          وكل خلية مهيأة لأداء دورها بكفاءة عالية.
+        </p>
+      </div>
+
+      <div class="info-card info-card-violet">
+        <div class="info-card-icon" aria-hidden="true">🔬</div>
+        <h3>النظرية الخلوية</h3>
+        <ul>
+          <li><strong>١.</strong> جميع الكائنات الحية تتكون من خلية أو أكثر.</li>
+          <li><strong>٢.</strong> الخلية هي الوحدة الأساسية للتركيب والوظيفة في الحياة.</li>
+          <li><strong>٣.</strong> كل خلية جديدة تنشأ من خلية سابقة لها عبر الانقسام الخلوي.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- تنويه علمي مهم -->
+    <div class="scientific-note">
+      <strong>تنويه:</strong> النموذج ثلاثي الأبعاد المعروض هنا تعليمي ومبسّط، ولا يمثل بالضرورة الأبعاد
+      أو النسب الحقيقية للعضيات داخل الخلية. الهدف هو توضيح الوظائف الأساسية لكل عضية بصورة ميسّرة.
+    </div>
+  </section>
+
+  <!-- ===== Modal (نافذة تفاصيل العضية) ===== -->
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title-ar" aria-hidden="true">
+    <div class="modal" id="modal" role="document">
+      <div class="modal-header">
+        <div class="modal-icon" id="modal-icon" aria-hidden="true">⬭</div>
+        <div class="modal-title">
+          <h2 id="modal-title-ar">النواة</h2>
+          <div class="english" id="modal-title-en">Nucleus</div>
+        </div>
+        <button class="modal-close" id="modal-close" aria-label="إغلاق النافذة">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="tag-row" id="modal-tags"></div>
+
+        <div class="short-desc" id="modal-short-desc"></div>
+
+        <h3 class="section-title">
+          <span class="marker" id="modal-marker"></span>
+          الوصف التفصيلي
+        </h3>
+        <div class="section-content" id="modal-full-desc"></div>
+
+        <div class="divider"></div>
+
+        <h3 class="section-title">
+          <span class="marker" id="modal-functions-marker"></span>
+          الوظائف الرئيسية
+        </h3>
+        <ul class="functions-list" id="modal-functions"></ul>
+
+        <div class="divider"></div>
+
+        <div class="info-card info-analogy">
+          <div class="info-title">🔀 تشبيه يسهّل الفهم</div>
+          <div class="info-content" id="modal-analogy"></div>
+        </div>
+
+        <div class="info-card info-fun">
+          <div class="info-title">✨ هل تعلم؟</div>
+          <div class="info-content" id="modal-fun"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ===== Footer ===== -->
+  <footer>
+    <p><strong>عالَم الخلية ثلاثي الأبعاد</strong> — درس تفاعلي عن الخلية الحيوانية والنباتية</p>
+    <p>موقع تعليمي تفاعلي للطلاب • HTML + CSS + JS + Three.js</p>
+  </footer>
+
+  <!-- ===== Scripts ===== -->
+  <!-- Three.js من CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- بيانات العضيات -->
+  <script src="data.js"></script>
+  <!-- المشهد ثلاثي الأبعاد -->
+  <script src="cell-scene.js"></script>
+  <!-- وحدة التحكم بالواجهة -->
+  <script src="app.js"></script>
+</body>
+</html>
